@@ -1,4 +1,4 @@
-# @test Projesi
+# Şarj Projesi
 
 Bu proje, elektrikli araç sahipleri için kapsamlı bir şarj istasyonu yönetim ve kullanıcı deneyimi uygulaması sunmaktadır.
 
@@ -97,6 +97,6 @@ Lütfen bu projeyi kullanırken veya değiştirirken lisans koşullarına uygun 
 
 ## İletişim
 
-@test Ekibi - [@test_twitter](https://twitter.com/test_twitter) - info@test-projesi.com
+@Şarj Ekibi - [@radioheavy x](https://x.com/radioheavy)
 
-Proje Linki: [https://github.com/kullaniciadi/test-projesi](https://github.com/kullaniciadi/test-projesi)
+Proje Linki: [https://github.com/kullaniciadi/test-projesi)
