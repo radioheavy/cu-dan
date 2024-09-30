@@ -117,6 +117,17 @@ struct ContentView: View {
             // Harita
             NavigationView {
                 MapView(region: $region, filteredStations: filteredStations, selectedStation: $selectedStation, showingFilters: $showingFilters, showingOffers: $showingOffers, offers: offers)
+                    .navigationTitle("Harita")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(action: { showingOffers = true }) {
+                                Image(systemName: "tag.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
             }
             .tabItem {
                 Label("Harita", systemImage: "map")
@@ -160,6 +171,9 @@ struct ContentView: View {
     }
 }
 
+import SwiftUI
+import MapKit
+
 struct MapView: View {
     @Binding var region: MKCoordinateRegion
     let filteredStations: [ChargeStation]
@@ -169,16 +183,16 @@ struct MapView: View {
     let offers: [Offer]
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Map(coordinateRegion: $region, annotationItems: filteredStations) { station in
                 MapAnnotation(coordinate: station.coordinate) {
                     Button(action: {
                         selectedStation = station
                     }) {
-                        iconForType(station.type)
+                        Image(systemName: iconForStationType(station.type))
                             .font(.system(size: 22))
                             .frame(width: 44, height: 44)
-                            .background(backgroundColorForType(station.type))
+                            .background(backgroundColorForStationType(station.type))
                             .clipShape(Circle())
                             .overlay(Circle().stroke(Color.white, lineWidth: 2))
                             .shadow(radius: 3)
@@ -202,7 +216,14 @@ struct MapView: View {
                     }
                     .padding()
                 }
+                .padding(.bottom, 60) // Tab bar'ın yüksekliği kadar boşluk bırakıyoruz
             }
+            
+            // Tab bar arka planı
+            Rectangle()
+                .fill(Color(.systemBackground).opacity(0.9))
+                .frame(height: 50)
+                .edgesIgnoringSafeArea(.bottom)
         }
         .sheet(item: $selectedStation) { station in
             StationDetailView(station: station, offers: offers.filter { $0.provider == station.provider })
@@ -220,12 +241,73 @@ struct MapView: View {
         }
     }
     
-    func backgroundColorForType(_ type: StationType) -> Color {
+    func iconForStationType(_ type: StationType) -> String {
+        switch type {
+        case .acNormal:
+            return "bolt.fill"
+        case .dcFast:
+            return "bolt.car"
+        }
+    }
+    
+    func backgroundColorForStationType(_ type: StationType) -> Color {
         switch type {
         case .acNormal:
             return .blue
         case .dcFast:
             return .orange
+        }
+    }
+}
+
+struct StationDetailView: View {
+    let station: ChargeStation
+    let offers: [Offer]
+    @State private var showingQRScanner = false
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack {
+                    iconForType(station.type)
+                        .font(.system(size: 40))
+                        .frame(width: 80, height: 80)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                    
+                    VStack(alignment: .leading) {
+                        Text(station.name)
+                            .font(.title2)
+                        Text(station.type.rawValue)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                if !offers.isEmpty {
+                    Section(header: Text("Mevcut Fırsatlar").font(.headline)) {
+                        ForEach(offers) { offer in
+                            OfferCard(offer: offer)
+                        }
+                    }
+                }
+                
+                Button(action: {
+                    showingQRScanner = true
+                }) {
+                    Text("Şarj İşlemi Başlat")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+            }
+            .padding()
+        }
+        .navigationTitle(station.name)
+        .sheet(isPresented: $showingQRScanner) {
+            QRScannerView()
         }
     }
     
@@ -239,6 +321,75 @@ struct MapView: View {
             return Image(systemName: "bolt.fill")
                 .foregroundColor(.white)
                 .background(Color.orange)
+        }
+    }
+}
+
+struct OfferCard: View {
+    let offer: Offer
+    
+    var body: some View {
+        HStack(spacing: 15) {
+            Image(offer.provider.rawValue)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 60, height: 60)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                .shadow(radius: 3)
+            
+            VStack(alignment: .leading, spacing: 5) {
+                Text(offer.provider.rawValue)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Text(offer.description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                
+                HStack {
+                    Image(systemName: "clock")
+                        .foregroundColor(.orange)
+                    Text("Son \(offer.validUntil, style: .relative) gün")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(15)
+        .shadow(color: .gray.opacity(0.2), radius: 5, x: 0, y: 2)
+    }
+}
+
+struct QRScannerView: View {
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        VStack {
+            Text("QR Kodu Tarayın")
+                .font(.title)
+            
+            Image(systemName: "qrcode.viewfinder")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 200, height: 200)
+                .foregroundColor(.blue)
+            
+            Text("Şarj cihazındaki QR kodu tarayın")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding()
+            
+            Button("Taramayı İptal Et") {
+                presentationMode.wrappedValue.dismiss()
+            }
+            .padding()
+            .background(Color.red)
+            .foregroundColor(.white)
+            .cornerRadius(10)
         }
     }
 }
@@ -1309,7 +1460,7 @@ struct OfferCard: View {
             }
         }
         .padding()
-        .background(LinearGradient(gradient: Gradient(colors: [Color.white, Color.blue.opacity(0.1)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(Color(.systemBackground))
         .cornerRadius(15)
         .shadow(color: .gray.opacity(0.2), radius: 5, x: 0, y: 2)
     }
