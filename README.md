@@ -97,6 +97,6 @@ Lütfen bu projeyi kullanırken veya değiştirirken lisans koşullarına uygun 
 
 ## İletişim
 
-@Şarj Ekibi - [@radioheavy x](https://x.com/dakmaybe)
+@Şarj Ekibi - [@dakmaybe x](https://x.com/dakmaybe)
 
 Proje Linki: [https://github.com/kullaniciadi/test-projesi)
